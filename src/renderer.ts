@@ -25,5 +25,4 @@
  *  });
  * ```
  */
-import "./index.css";
-import "./front/main";
+import "./client/main";
