@@ -1,16 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { EVENTS } from "../api";
 
 export const App = () => {
-  const [counter, setCounter] = useState(0);
+  const [tasks, setTasks] = useState<{ title: string }[]>([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const tasks = await window.API[EVENTS.getTasks]();
+      setTasks(tasks);
+    };
+    fetch();
+
+    window.API.onUpdate(fetch);
+  }, []);
+
   return (
-    <div className="bg-neutral-900 h-[100dvh] grid place-items-center text-neutral-100 place-content-center gap-2">
-      <p>{counter}</p>
-      <button
-        className="min-w-[60px] text-sm border border-neutral-500 h-8 rounded"
-        onClick={() => setCounter((c) => c + 1)}
-      >
-        +
-      </button>
+    <div className="bg-neutral-900 min-h-[100dvh] text-neutral-100 gap-2 pt-10 px-6">
+      <div className="text-4xl">
+        {tasks.map((t, i) => {
+          return <div key={i}>{t.title}</div>;
+        })}
+      </div>
     </div>
   );
 };

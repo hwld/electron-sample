@@ -8,7 +8,8 @@ import {
   Tray,
 } from "electron";
 import path from "path";
-import { API } from "./api";
+import { EVENTS } from "./api";
+import { prisma } from "./backend/prisma";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
 declare const MAIN_WINDOW_VITE_NAME: string;
@@ -36,7 +37,7 @@ const createMainWindow = () => {
   }
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   return mainWindow;
 };
@@ -66,7 +67,7 @@ const createInputPanel = () => {
   }
 
   // Open the DevTools.
-  inputPanel.webContents.openDevTools();
+  // inputPanel.webContents.openDevTools();
 
   return inputPanel;
 };
@@ -117,13 +118,28 @@ app.whenReady().then(() => {
     inputPanel.hide();
   });
 
-  ipcMain.on(API.openMain, () => {
+  ipcMain.handle(EVENTS.openMain, () => {
     inputPanel.hide();
     mainWindow.show();
   });
 
-  ipcMain.on(API.hideInput, () => {
+  ipcMain.handle(EVENTS.hideInput, () => {
     inputPanel.hide();
+  });
+
+  ipcMain.handle(EVENTS.createTask, async (_, title: string) => {
+    await prisma.task.create({ data: { title } });
+  });
+
+  ipcMain.handle(EVENTS.getTasks, async () => {
+    const tasks = await prisma.task.findMany();
+    return tasks;
+  });
+
+  ipcMain.handle(EVENTS.update, async () => {
+    BrowserWindow.getAllWindows().forEach((window) => {
+      window.webContents.send(EVENTS.onUpdate);
+    });
   });
 
   globalShortcut.register("Ctrl+Shift+P", () => {
