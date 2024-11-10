@@ -1,2 +1,9 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+import { contextBridge, ipcRenderer } from "electron";
+import { API, IElectronAPI } from "./api";
+
+const api: IElectronAPI = {
+  openMain: () => ipcRenderer.send(API.openMain),
+  hideInput: () => ipcRenderer.send(API.hideInput),
+};
+
+contextBridge.exposeInMainWorld("API", api);
