@@ -15,11 +15,6 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 declare const INPUT_PANEL_VITE_DEV_SERVER_URL: string;
 declare const INPUT_PANEL_VITE_NAME: string;
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require("electron-squirrel-startup")) {
-  app.quit();
-}
-
 const createMainWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -41,7 +36,7 @@ const createMainWindow = () => {
   }
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   return mainWindow;
 };
@@ -71,7 +66,7 @@ const createInputPanel = () => {
   }
 
   // Open the DevTools.
-  // inputPanel.webContents.openDevTools();
+  inputPanel.webContents.openDevTools();
 
   return inputPanel;
 };
