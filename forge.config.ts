@@ -6,7 +6,12 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true,
+    asar: { unpack: "**/node_modules/**" },
+    extraResource: [
+      "node_modules/prisma",
+      "node_modules/@prisma",
+      "node_modules/.prisma",
+    ],
   },
   rebuildConfig: {},
   makers: [new MakerZIP({}, ["darwin"])],
