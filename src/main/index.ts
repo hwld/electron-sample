@@ -12,6 +12,7 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { EVENTS } from "../preload/api";
 import appIcon from "../../resources/icon.png?asset";
+import { db, migrate } from "./db";
 
 const ELECTRON_RENDERER_URL = process.env["ELECTRON_RENDERER_URL"];
 
@@ -73,7 +74,7 @@ let tray;
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron");
 
@@ -83,6 +84,8 @@ app.whenReady().then(() => {
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
+
+  await migrate();
 
   const icon = nativeImage.createFromPath(appIcon).resize({ width: 16, height: 16 });
   tray = new Tray(icon);
@@ -132,12 +135,12 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle(EVENTS.createTask, async (_, title: string) => {
-    // TODO:
-    console.log(title);
+    await db.task.create({ data: { title } });
   });
 
   ipcMain.handle(EVENTS.getTasks, async () => {
-    return [];
+    const tasks = await db.task.findMany();
+    return tasks;
   });
 
   ipcMain.handle(EVENTS.update, async () => {

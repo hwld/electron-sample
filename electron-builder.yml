@@ -9,8 +9,23 @@ files:
   - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
   - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
+  # ランタイムで必要ないものを除外する
+  - "!**/node_modules/@prisma/engines/introspection-engine*"
+  - "!**/node_modules/@prisma/engines/schema-engine*"
+  - "!**/node_modules/@prisma/engines/prisma-fmt*"
+  - "!**/node_modules/@prisma/engines/query_engine-*"
+  - "!**/node_modules/@prisma/engines/libquery_engine*"
+  - "!**/node_modules/prisma/query_engine*"
+  - "!**/node_modules/prisma/libquery_engine*"
+  - "!**/node_modules/prisma/**/*.mjs"
+extraResources:
+  # マイグレーションに必要なファイル
+  - "node_modules/prisma/**"
+  - "node_modules/.prisma/**"
+  - "node_modules/@prisma/**"
 asarUnpack:
   - resources/**
+  - prisma
 win:
   executableName: electron-vite
 nsis:
