@@ -1,24 +1,20 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { EVENTS } from '../preload/api'
 
-function createWindow(): void {
+const ELECTRON_RENDERER_URL = process.env['ELECTRON_RENDERER_URL']
+
+function createMainWindow(): BrowserWindow {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      preload: join(__dirname, '../preload/index.js')
     }
-  })
-
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -28,11 +24,38 @@ function createWindow(): void {
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  if (is.dev && ELECTRON_RENDERER_URL) {
+    mainWindow.loadURL(`${ELECTRON_RENDERER_URL}/main-window.html`)
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(__dirname, '../renderer/main-window.html'))
   }
+
+  return mainWindow
+}
+
+function createInputPanel(): BrowserWindow {
+  const inputPanel = new BrowserWindow({
+    width: 300,
+    height: 50,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js')
+    },
+    roundedCorners: false,
+    frame: false,
+    resizable: false,
+    alwaysOnTop: true,
+    transparent: true,
+    show: false,
+    type: 'panel'
+  })
+
+  if (is.dev && ELECTRON_RENDERER_URL) {
+    inputPanel.loadURL(`${ELECTRON_RENDERER_URL}/input-panel.html`)
+  } else {
+    inputPanel.loadFile(join(__dirname, '../renderer/input-panel.html'))
+  }
+
+  return inputPanel
 }
 
 // This method will be called when Electron has finished
@@ -49,26 +72,61 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
-  createWindow()
+  const mainWindow = createMainWindow()
+  const inputPanel = createInputPanel()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (!mainWindow.isVisible()) {
+      mainWindow.show()
+    }
+  })
+
+  let isQuitting = false
+  app.on('before-quit', () => {
+    isQuitting = true
+  })
+
+  mainWindow.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault()
+      mainWindow.hide()
+    }
+  })
+
+  inputPanel.on('blur', () => {
+    inputPanel.hide()
+  })
+
+  ipcMain.handle(EVENTS.openMain, () => {
+    inputPanel.hide()
+    mainWindow.show()
+  })
+
+  ipcMain.handle(EVENTS.hideInput, () => {
+    inputPanel.hide()
+  })
+
+  ipcMain.handle(EVENTS.createTask, async (_, title: string) => {
+    // TODO:
+    console.log(title)
+  })
+
+  ipcMain.handle(EVENTS.getTasks, async () => {
+    return []
+  })
+
+  ipcMain.handle(EVENTS.update, async () => {
+    BrowserWindow.getAllWindows().forEach((window) => {
+      window.webContents.send(EVENTS.onUpdate)
+    })
+  })
+
+  globalShortcut.register('Ctrl+Shift+P', () => {
+    if (inputPanel.isVisible()) {
+      inputPanel.hide()
+    } else {
+      inputPanel.show()
+      inputPanel.focus()
+    }
   })
 })
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
