@@ -7,14 +7,14 @@ export default defineConfig({
       targets: [
         {
           src: "node_modules/prisma",
-          dest: ".vite/build/node_modules",
+          dest: ".vite/node_modules",
         },
-        { src: "node_modules/.prisma", dest: ".vite/build/node_modules" },
+        { src: "node_modules/.prisma", dest: ".vite/node_modules" },
         {
           src: "prisma/migrations",
-          dest: ".vite/build/node_modules/.prisma/client",
+          dest: ".vite/node_modules/.prisma/client",
         },
-        { src: "node_modules/@prisma", dest: ".vite/build/node_modules" },
+        { src: "node_modules/@prisma", dest: ".vite/node_modules" },
       ],
       hook: "writeBundle",
       copyOnce: true,

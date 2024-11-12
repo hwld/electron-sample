@@ -1,7 +1,5 @@
 import fs from "node:fs";
-import { dbPath, dbUrl, prisma, runPrismaCommand } from "./prisma";
-import path from "node:path";
-import { app } from "electron";
+import { dbPath, prisma, runPrismaMigrate } from "./prisma";
 import log from "electron-log";
 
 type Migration = {
@@ -24,18 +22,7 @@ export const migrate = async () => {
 
   if (needsMigration) {
     try {
-      const schemaPath = path.join(
-        app.getAppPath(),
-        "../.prisma/client/schema.prisma"
-      );
-      log.info(
-        `Needs a migration. Running prisma migrate with schema path ${schemaPath}`
-      );
-
-      await runPrismaCommand({
-        command: ["migrate", "deploy", "--schema", schemaPath],
-        dbUrl,
-      });
+      await runPrismaMigrate();
       log.info("Migration done.");
     } catch (e) {
       log.error(e);
