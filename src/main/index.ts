@@ -1,7 +1,17 @@
-import { app, shell, BrowserWindow, ipcMain, globalShortcut } from "electron";
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  globalShortcut,
+  nativeImage,
+  Tray,
+  Menu
+} from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { EVENTS } from "../preload/api";
+import appIcon from "../../resources/icon.png?asset";
 
 const ELECTRON_RENDERER_URL = process.env["ELECTRON_RENDERER_URL"];
 
@@ -58,6 +68,8 @@ function createInputPanel(): BrowserWindow {
   return inputPanel;
 }
 
+let tray;
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -71,6 +83,19 @@ app.whenReady().then(() => {
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
+
+  const icon = nativeImage.createFromPath(appIcon).resize({ width: 16, height: 16 });
+  tray = new Tray(icon);
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Quit",
+      click: (): void => {
+        app.quit();
+      }
+    }
+  ]);
+  tray.setContextMenu(contextMenu);
 
   const mainWindow = createMainWindow();
   const inputPanel = createInputPanel();
